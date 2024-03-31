@@ -1,83 +1,34 @@
 #include <iostream>
 #include <vector>
-#include <set>
-#include <unordered_map>
-#include <unordered_set>
 
-size_t coeffHash = 277,divider = 1e9+7;
-
-void fillPows(std::vector<size_t> &powsForHash)
+void approximateStringMathing(const std::string &text, const std::string &pattern)
 {
-    powsForHash[0] = 1;
-    for (size_t i = 1; i < powsForHash.size(); ++i)
+    if(text.size() < pattern.size()){std::cout << '0';return;}
+    int countChangesChars = 0;
+    std::vector<int> positionsApproximateStrings;
+    for (size_t i = 0; i < text.size() - pattern.size() + 1; ++i)
     {
-        powsForHash[i] = (powsForHash[i-1] * coeffHash) % divider;
-    }
-}
-
-void hashFile(const std::string &string, std::vector<size_t> &hashForFile,std::vector<size_t> &powsForHash)
-{
-    fillPows(powsForHash);
-    for (size_t i = 1; i <= string.size(); ++i)
-    {
-        hashForFile[i] = (hashForFile[i-1] * coeffHash + string[i-1]) % divider;
-    }
-}
-
-size_t hashSubStr(const std::vector<size_t> &hashString,const std::vector<size_t> &powsForHash,size_t leftIndex,size_t rightIndex)
-{
-    size_t hashSubStr,leftHash,rightHash;
-    leftHash = (hashString[leftIndex-1]*powsForHash[rightIndex-leftIndex+1]) % divider;
-    rightHash = hashString[rightIndex];
-    if(rightHash < leftHash)
-    {
-        rightHash += divider;
-    }
-    hashSubStr = rightHash - leftHash;
-    return hashSubStr;
-}
-
-void hashCycleString(const std::string &string, std::unordered_set<size_t> &hashesCycleString)
-{
-    std::vector<size_t> hashString(string.size()+1);
-    std::vector<size_t> powsForHash(string.size()+1);
-    hashFile(string,hashString,powsForHash);
-    size_t i = 1,j = 2;
-    size_t hashCycleString = hashString[string.size()];
-    hashesCycleString.insert(hashCycleString);
-    
-    while(j <= string.size())
-    {
-        hashCycleString = ((hashSubStr(hashString,powsForHash,j,string.size()) * powsForHash[i])%divider + hashSubStr(hashString,powsForHash,1,i))%divider;
-        hashesCycleString.insert(hashCycleString);
-        ++i,++j;
-    }
-
-}
-
-size_t countCycleStringInText(const std::string &text,const std::string &cycleString)
-{
-    std::unordered_set<size_t> hashesCycleString;
-    hashCycleString(cycleString,hashesCycleString);
-
-    std::vector<size_t> hashForFile(text.size()+1);
-    std::vector<size_t> powsForHashFile(text.size()+1);
-    hashFile(text,hashForFile,powsForHashFile);
-
-    size_t hashSubStringLeft,hashSubStringRight,hashSubString, divider = 1e9+7, counter = 0;
-    for(const size_t &hashString:hashesCycleString)
-    {
-        for (size_t i = cycleString.size(); i <= text.size(); ++i)
+        countChangesChars = 0;
+        for (size_t j = 0; j < pattern.size(); ++j)
         {
-            hashSubString = hashSubStr(hashForFile,powsForHashFile,i-cycleString.size()+1,i);
-            if(hashSubString == hashString)
+            if(text[i+j] != pattern[j])
             {
-                ++counter;
+                ++countChangesChars;
+                if(countChangesChars > 1){break;}
             }
         }
+        if(countChangesChars <= 1)
+        {
+            positionsApproximateStrings.push_back(i+1);
+        }
     }
-    return counter;
 
+    std::cout << positionsApproximateStrings.size() << '\n';
+    for (size_t i = 0; i < positionsApproximateStrings.size(); ++i)
+    {
+        std::cout << positionsApproximateStrings[i] << ' ';
+    }
+    
 }
 
 int main()
@@ -86,11 +37,11 @@ int main()
 	std::cin.tie(nullptr);
 	std::cout.tie(nullptr);
 
-    std::string mainString,cycleString;
+    std::string text,pattern;
+    std::cin >> pattern >> text;
     
-    std::cin >> mainString >> cycleString;
 
-    std::cout << countCycleStringInText(mainString,cycleString);
+    approximateStringMathing(text,pattern);
 
     return 0;
 }
