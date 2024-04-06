@@ -3,49 +3,52 @@
 #include <list>
 #include <math.h>
 
+void maxSubsequence(const std::vector<long> &sequence)
+{
+    std::vector<long> result;
+    std::vector<long> preResult;
+    long value;
+    for (size_t i = 0; i < sequence.size(); ++i)
+    {
+        //if(result.size() > sequence.size() - i){break;}
+        if(sequence[i] < 1){continue;}
+        value = sequence[i];
+        preResult.push_back(value);
+        for (size_t j = i + 1; j < sequence.size(); ++j)
+        {
+            if(value < sequence[j])
+            {
+                value = sequence[j];
+                preResult.push_back(value);
+            }
+        }
+        if(preResult.size() > result.size())
+        {
+            result = std::move(preResult);
+        }
+        preResult.clear();
+    }
+    
+    std::cout << result.size() << '\n';
+    for (size_t i = 0; i < result.size(); ++i)
+    {
+        std::cout << result[i] << ' ';
+    }
+    
+}
+
 int main()
 {
-    long count,lengthJump;
-    std::cin >> count >> lengthJump;
-    std::vector<long> prices(count+1);
-    for (size_t i = 2; i < count; ++i)
+    int count;
+    std::cin >> count;
+    std::vector<long> sequence(count);
+    for (long &i:sequence)
     {
-        long value;
-        std::cin >> value;
-        prices[i] = value;
-    }
-
-    long place = 1;
-    long long sum = 0;
-    std::vector<long> places{place};
-    while(place != count)
-    {
-        long long max = -10000;
-        long newPlace = 0;
-        for (size_t i = 1; i <= lengthJump && place + i <= count; ++i)
-        {
-            if(max < prices[place+i])
-            {
-                newPlace = place+i;
-                max = prices[place+i];
-            }
-            if(max > 0){break;}
-        }
-        sum+=max;
-        place = newPlace;
-        places.push_back(place);
-    }
-
-    std::cout << sum << '\n' << places.size()-1 << '\n';
-    for (size_t i = 0; i < places.size(); ++i)
-    {
-        std::cout << places[i] << ' ';
+        std::cin >> i;
     }
     
-    
+    maxSubsequence(sequence);
 
-    
-    
 
 	return 0;
 }
