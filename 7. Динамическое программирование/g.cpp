@@ -1,74 +1,115 @@
 #include <iostream>
+#include <algorithm>
 #include <vector>
-#include <list>
-#include <math.h>
 
-void biggestArea(const std::vector<std::vector<int>> &rectangle)
+std::vector<char>obr(300,'.');
+ 
+void removeBrackets(int left,int right,int count,const std::string &string,std::string &answer,std::vector<std::vector<int>> &dp){
+    
+    if(left > right)return;
+    
+    if(left == right){
+        answer[right] = '/';
+        return;
+    }
+    
+    if(dp[left][right] == dp[left][right-1]+1){
+        
+        answer[right] = '/';
+        
+        removeBrackets(left,right-1,count,string,answer,dp);
+        
+        return;
+    }
+    
+    for(int a = left;a<right;++a){
+                 
+        if(obr[string[right]] == string[a]){
+            
+            if(a == left){
+                
+                if(dp[left][right] == dp[left+1][right-1]){
+                
+                    removeBrackets(left+1,right-1,count,string,answer,dp);
+                    return;
+                }
+                
+            }
+            else if(dp[left][right] == dp[left][a-1] + dp[a][right]){
+                
+                removeBrackets(left,a-1,count,string,answer,dp);
+                removeBrackets(a,right,count,string,answer,dp);
+                return;              
+            }
+        }
+    }
+}
+ 
+ 
+ 
+ 
+int main() 
 {
-    int n = rectangle.size(),m = rectangle[0].size();
-    std::vector<std::vector<int>> dp(n,std::vector<int>(m));
-    int x, y;
-    int maxSide = 0;
-
-    for (size_t i = 0; i < n; i++)
+    std::string string;
+    std::cin >> string;
+    
+    int count = string.size();
+    std::vector<std::vector<int>> dp(count,std::vector<int>(count));
+    
+    obr[')'] = '(';
+    obr[']'] = '[';
+    obr['}'] = '{';
+     
+    for(int i = 0;i < count; ++i)
     {
-        dp[i][0] = rectangle[i][0];
-        if(dp[i][0] >= maxSide)
-        {
-            maxSide = dp[i][0];
-            y = i, x = 0;
-        }
+        dp[i][i] = 1;
     }
-
-    for (size_t i = 0; i < m; i++)
+     
+    for(int i = 1;i<=count;++i)
     {
-        dp[0][i] = rectangle[0][i];
-        if(dp[0][i] >= maxSide)
+         
+        for(int j = 0;j<count;++j)
         {
-            maxSide = dp[0][i];
-            x = i, y = 0;
-        }
-    }
-
-    for (size_t i = 1; i < n; i++)
-    {
-        for (size_t j = 1; j < m; j++)
-        {
-            if(rectangle[i][j] == 1)
+             
+            if(j + i >= count){break;}
+             
+            int l = j;
+            int r = j+i;
+             
+            dp[l][r] = dp[l][r-1] + 1;
+             
+            for(int a = l;a<r;++a)
             {
-                dp[i][j] = std::min(dp[i-1][j], dp[i][j-1]);
-                dp[i][j] = std::min(dp[i][j],dp[i-1][j-1])+1;
-                if(dp[i][j] >= maxSide)
+                if(obr[string[r]] == string[a])
                 {
-                    y = i,x = j;
-                    maxSide = dp[i][j];
+                    if(a == l)
+                    {
+                        dp[l][r] = std::min(dp[l][r],dp[l+1][r-1]);
+                    }
+                    else 
+                    {
+                        dp[l][r] = std::min(dp[l][r],dp[l][a-1] + dp[a][r]);
+                    }
                 }
             }
         }
     }
-    std::cout << maxSide << '\n' << y - maxSide + 2 << ' ' << x - maxSide + 2;
-}
-
-
-int main()
-{
-    int n,m,value;
-    std::cin >> n >> m;
-    std::vector<std::vector<int>> area(n+1,std::vector<int>(m+1));
-    std::vector<std::vector<std::pair<int,int>>> distances(n,std::vector<std::pair<int,int>>(m));
-
-    for (size_t i = 0; i < n; ++i)
+         
+    
+    std::string answer(count,'.');
+    //answer.resize(count,'.');
+    
+    removeBrackets(0,count-1,count,string,answer,dp);
+    
+    for(int i = 0;i<count;++i)
     {
-        for (size_t j = 0; j < m; ++j)
+        if(answer[i] == '.')
         {
-            std::cin >> value;
-            area[i][j] = value;
+            std::cout << string[i];
         }
     }
-
-    biggestArea(area);
-
-
-
-	return 0;
+    
+    
+    
+    return 0;
 }

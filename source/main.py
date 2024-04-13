@@ -1,33 +1,33 @@
-def largest_square_area(rectangle):
-    n = len(rectangle)
-    m = len(rectangle[0])
+def longest_valid_bracket_sequence(s):
+    stack = []
+    max_length = 0
+    start_index = -1
 
-    dp = [[0] * m for _ in range(n)]
+    bracket_pairs = {']': '[', '}': '{', ')': '('}
 
-    max_side = 0
+    for i, char in enumerate(s):
+        if char in bracket_pairs.values():
+            stack.append((char, i))
+        elif char in bracket_pairs.keys():
+            if stack and stack[-1][0] == bracket_pairs[char]:
+                stack.pop()
+                current_length = i - (stack[-1][1] if stack else start_index)
+                if current_length > max_length:
+                    max_length = current_length
+            else:
+                start_index = i
 
-    # Initialize first row and column
-    for i in range(n):
-        dp[i][0] = int(rectangle[i][0])
-        max_side = max(max_side, dp[i][0])
-    for j in range(m):
-        dp[0][j] = int(rectangle[0][j])
-        max_side = max(max_side, dp[0][j])
+    longest_sequence = ''
+    if stack:
+        stack.append(('end', len(s)))
+        for i in range(len(stack) - 1):
+            if stack[i][0] != 'end':
+                sequence = s[stack[i][1]:stack[i + 1][1]]
+                if len(sequence) > len(longest_sequence):
+                    longest_sequence = sequence
 
-    # Fill DP table
-    for i in range(1, n):
-        for j in range(1, m):
-            if rectangle[i][j] == '1':
-                dp[i][j] = min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]) + 1
-                max_side = max(max_side, dp[i][j])
+    return longest_sequence
 
-    return max_side * max_side  # Return area of the largest square
-
-# Example usage:
-rectangle = [
-    ['0', '1', '0', '0', '0'],
-    ['0', '1', '0', '1', '1'],
-    ['0', '1', '1', '0', '1'],
-    ['0', '0', '0', '1', '0']
-]
-print("Area of largest square consisting only of 1s:", largest_square_area(rectangle))
+# Пример использования:
+bracket_sequence = "{([)}][]"
+print("Наибольшая правильная скобочная последовательность:", longest_valid_bracket_sequence(bracket_sequence))
