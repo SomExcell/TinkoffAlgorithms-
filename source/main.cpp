@@ -1,57 +1,76 @@
 #include <iostream>
 #include <vector>
+#include <list>
+#include <math.h>
 #include <algorithm>
 
-const int mx = 1000006;
-
-long long tree[2][mx];
-long long arr1[mx],arr2[mx];
-
-void update(int id, int idx, long long val)
+std::pair<int,int> distance(const int &cut, std::list<int> &goodCut)
 {
-    for(; idx<mx && idx; idx+=idx&-idx)
-        tree[id][idx]+=val;
+    std::pair<int,int> indexAndDistance{-1,1e9};
+    int dist = 1e9;
+    for(const auto &i:goodCut)
+    {
+        dist = std::abs(cut-i);
+        if(dist < indexAndDistance.second)
+        {
+            indexAndDistance.first = i,indexAndDistance.second = dist;
+        }
+    }
+    return indexAndDistance;
 }
 
-long long query(int id, int idx)
+void removeCut(std::list<int> &cuts,int index)
 {
-    long long ret=0;
-    for(; idx; idx-=idx&-idx)
-        ret+=tree[id][idx];
-    return ret;
+    auto it = cuts.begin();
+    while(*it != index)
+    {
+        it++;
+    }
+    cuts.erase(it);
 }
 
-std::vector<long long> vec;
+void sawing(std::list<int> &cuts,size_t lengthTimber)
+{
+    size_t sum = 0;
+    std::list<int> goodCut;
+    goodCut.push_back(lengthTimber/2);
+    std::pair<int,int> distAndIndex,better{-1,1e9};
+    int indexInCut;
+    while(!cuts.empty())
+    {
+        for(const auto &i:cuts)
+        {
+            distAndIndex = distance(i,goodCut);
+            if(distAndIndex.second < better.second)
+            {
+                indexInCut = i;
+                better = distAndIndex;
+            }
+        }
+        goodCut.push_back(distAndIndex.first/2);
+        goodCut.push_back(distAndIndex.second+distAndIndex.second/2);
+        removeCut(goodCut,distAndIndex.second);
+        removeCut(cuts,indexInCut);
+    }
+}
 
 int main()
 {
-    int count;
-    std::cin >> count;
-    vec.push_back(0);
-    for (size_t i = 1; i <= count; i++)
-    {
-        std::cin >> arr1[i];
-        vec.push_back(arr1[i]);
-    }
-    std::sort(vec.begin(),vec.end());
+    std::ios::sync_with_stdio(false);
+	std::cin.tie(nullptr);
+	std::cout.tie(nullptr);
 
-    long long ans = 0;
-
-    for(int i=count; i>0; i--)
+    size_t lengthTimber,countSawing;
+    std::cin >> lengthTimber >> countSawing;
+    std::list<size_t> cuts;
+    for (size_t i = 0; i < countSawing; i++)
     {
-        int id=lower_bound(vec.begin(),vec.end(),arr1[i])-vec.begin();
-        arr2[i]=query(0,id);
-        update(0,id+1,1);
+        size_t value;
+        std::cin >> value;
+        cuts.push_back(value);
     }
 
-    for(int i=count; i>0; i--)
-    {
-        int id=lower_bound(vec.begin(),vec.end(),arr1[i])-vec.begin();
-        ans+=query(1,id);
-        update(1,id+1,arr2[i]);
-    }
-
-    std::cout << ans;
-
+    
+    
     return 0;
 }
