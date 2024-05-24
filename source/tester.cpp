@@ -4,13 +4,13 @@
 #include <math.h>
 
 using namespace std;
-int n, m, a[20];
+int count, m, a[20];
 long long s;
 vector<int> cur, res;
 void f(int pos = 0, long long sum = 0) {
     if (pos == m) 
     {
-        if (sum == n) 
+        if (sum == count) 
         {
             if (!res.size() || cur.size() < res.size()) 
             {
@@ -38,7 +38,7 @@ std::string first()
         //cin >> a[i];
         s += a[i] * 2;
     }
-    if (s < n) 
+    if (s < count) 
     {
         answer = "-1";
         return answer;
@@ -141,7 +141,7 @@ int main()
     while(true)
     {
         //size_t n,m;
-        n = rand() % inf + 1;
+        count = rand() % inf + 1;
         m = rand() % 10 + 1;
         for (size_t i = 0; i < m; i++)
         {
@@ -150,18 +150,18 @@ int main()
         }
         std::sort(begin(a),a+m);
         std::string firs = first();
-        std::string sec = second(n,m);
+        std::string sec = second(count,m);
         if(firs[0] != sec[0])
         {
             std::cout << "AnswersFirst:\n"<< firs << "\nAnswerSec:\n" << sec << '\n';
-            std::cout << "Test\n" << n << ' ' << m << '\n';
+            std::cout << "Test\n" << count << ' ' << m << '\n';
             for (size_t i = 0; i < m; i++)
             {
                 std::cout << a[i] << ' ';
             }
             std::cout << "\n\n";
             first();
-            second(n,m);
+            second(count,m);
             //break;
         }
         for (size_t i = 0; i < 20; i++)

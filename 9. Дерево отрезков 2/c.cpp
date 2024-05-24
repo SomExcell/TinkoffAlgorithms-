@@ -1,208 +1,174 @@
 #include <iostream>
 #include <vector>
-#include <algorithm>
 
-enum Color
+int getMiddle(int left, int right) 
 {
-    WHITE,
-    BLACK,
-    WB,
-    NOT
+    return left + (right - left) / 2;
+}
+
+struct Node 
+{
+    int number;
+    int segments;
+    int set;
+    int l;
+    int r;
+    bool up;
+
+    Node() 
+    {
+        number = 1;
+        segments = 1;
+        set = 0;
+        up = false;
+        l = 0;
+        r = 0;
+    }
+
+    Node(int n, int seg, int s, int left, int right, bool u) 
+    {
+        number = n;
+        segments = seg;
+        set = s;
+        l = left;
+        r = right;
+        up = u;
+    }
 };
 
-struct Node
-{
-    int left;
-    int right;
-    Color color = WHITE;
-    Color willColor = NOT;
-    size_t length = 0;
-    size_t count = 0;
-};
+std::vector <Node> tree;
+std::vector<char> color;
+std::vector<int> cord;
+std::vector<int> delta;
+int count;
 
-size_t newSize(size_t size)
+void build(int v, int tl, int tr) 
 {
-    size_t result = 1;
-    while(result < size){result*=2;}
-    return result;
-}
-
-void buildSegmentTree(std::vector<Node> &segmentTree)
-{
-    segmentTree.resize(newSize(segmentTree.size())*2);
-    int value = segmentTree.size()/4*(-1);
-    for (int i = segmentTree.size()/2; i < segmentTree.size(); i++,value++)
+    if (tl == tr) 
     {
-        segmentTree[i].left = segmentTree[i].right = value;
-    }
-    for (size_t i = segmentTree.size()/2 - 1; i > 0; i--)
+        tree[v] = Node(0, 0, 0, tl, tr, false);
+    } 
+    else 
     {
-        segmentTree[i].left = segmentTree[i*2].left;
-        segmentTree[i].right = segmentTree[i*2+1].right;
+        int tm = getMiddle(tl, tr);
+        build(v * 2, tl, tm);
+        build(v * 2 + 1, tm + 1, tr);
+        tree[v] = Node(0, 0, 0, tl, tr, false);
     }
 }
 
-void willChild(int index, std::vector<Node> &segmentTree)
+void push(int v) 
 {
-    if(segmentTree[index].willColor != NOT){segmentTree[index].color = segmentTree[index].willColor;}
-    if(index < segmentTree.size()/2 && segmentTree[index].willColor != NOT)
-    {
-        segmentTree[index*2].willColor = segmentTree[index*2+1].willColor = segmentTree[index].willColor;
-    }
-    segmentTree[index].willColor = NOT;
+    if (!tree[v].up){return;}
+        
+    tree[v].number = tree[v].set * (tree[v].r - tree[v].l + 1);
+    tree[v].segments = 1 * tree[v].set;
+    tree[v].up = false;
+
+    if (tree[v].l == tree[v].r){return;}
+        
+    tree[v * 2].set = tree[v].set;
+    tree[v * 2 + 1].set = tree[v].set;
+
+    tree[v * 2].up = true;
+    tree[v * 2 + 1].up = true;
 }
 
-void updateValues(int index, std::vector<Node> &segmentTree)
+bool leftisblack(int v) 
 {
-    if(index < segmentTree.size()/2)
-    {
-        willChild(index*2,segmentTree);
-        willChild(index*2+1,segmentTree);
-        segmentTree[index].count = segmentTree[index*2].count + segmentTree[index*2+1].count;
-        segmentTree[index].length = segmentTree[index*2].length + segmentTree[index*2+1].length;
-        if(segmentTree[index*2].color != segmentTree[index*2+1].color){segmentTree[index].color = WB;}
-    }
-    if(segmentTree[index].color == WHITE){segmentTree[index].count = 0, segmentTree[index].length = 0;}
+    push(v);
+    if (tree[v].l == tree[v].r){return tree[v].number == 1;}
+    return leftisblack(v * 2);
 }
 
-void divNode(int index,std::vector<Node> &segmentTree)
+bool rightisblack(int v) 
 {
-    if(index < segmentTree.size()/2 && (segmentTree[index*2].willColor == BLACK || segmentTree[index*2].color == BLACK) && (segmentTree[index*2+1].willColor == BLACK ||segmentTree[index*2+1].color == BLACK))
-    {
-        segmentTree[index*2].count = segmentTree[index].count;
-        segmentTree[index*2].length = segmentTree[index*2+1].length = segmentTree[index].length/2;
-    }
+    push(v);
+    if (tree[v].l == tree[v].r){return tree[v].number == 1;}
+    return rightisblack(v * 2 + 1);
 }
 
-void update(int index,std::vector<Node> &segmentTree)
-{
-    willChild(index,segmentTree);
-    divNode(index,segmentTree);
-    updateValues(index,segmentTree);
-}
+void update(int v, int value, int l, int r) {
+    if (tree[v].r < l || tree[v].l > r)
+        return;
 
-void up(int index,std::vector<Node> &segmentTree)
-{
-    while(index != 0)
-    {
-        updateValues(index,segmentTree);
-        index/=2;
-    }
-}
-
-int checkNode(int left,int right,std::vector<Node> &segmentTree)
-{
-    int index = 1;
-    while(segmentTree[index].left != left || segmentTree[index].right != right)
-    {
-        update(index,segmentTree);
-        if(segmentTree[index*2].right < left){index = index*2+1;}
-        else{index*=2;}
-    }
-    update(index,segmentTree);
-    if(segmentTree[index].color == WB)
-    {
-        while(segmentTree[index].color==WB)
-        {
-            update(index,segmentTree);
-            index*=2;
-        }
-    }
-    return index;
-}
-
-void updateCountBlack(int index,std::vector<Node> &segmentTree)
-{
-    int left,right;
-    left = checkNode(segmentTree[index-1].left,segmentTree[index-1].right,segmentTree);
-    right = checkNode(segmentTree[index+1].left,segmentTree[index+1].right,segmentTree);
-    Color leftC = segmentTree[left].color;
-    Color rightC = segmentTree[right].color;
-    if(segmentTree[index].color == BLACK)
-    {
-        if(segmentTree[left].color == WHITE && segmentTree[right].color == WHITE)
-        {
-            segmentTree[index].count = 1;
-        }
-        else if(segmentTree[left].color == WHITE && segmentTree[right].color == BLACK)
-        {
-            segmentTree[index].count = 1;
-            segmentTree[right].count = 0;
-        }
-        else if(segmentTree[left].color == BLACK && segmentTree[right].color == WHITE)
-        {
-
-        }
-        else if(segmentTree[left].color == BLACK && segmentTree[right].color == BLACK)
-        {
-            segmentTree[right].count = 0;
-        }
-        segmentTree[index].length = std::abs(segmentTree[index].left - segmentTree[index].right) + 1;
-    }
-    else
-    {
-        if(segmentTree[left].color == WHITE && segmentTree[right].color == WHITE)
-        {
-        }
-        else if(segmentTree[left].color == WHITE && segmentTree[right].color == BLACK)
-        {
-            segmentTree[right].count = 1;
-        }
-        else if(segmentTree[left].color == BLACK && segmentTree[right].color == WHITE)
-        {
-        }
-        else if(segmentTree[left].color == BLACK && segmentTree[right].color == BLACK)
-        {
-            segmentTree[right].count = 1;
-        }
-        segmentTree[index].count = 0;
-        segmentTree[index].length= 0;
-    }
-    up(left,segmentTree);
-    up(right,segmentTree);
-}
-
-void draw(int index,int left, int right,Color color,std::vector<Node> &segmentTree)
-{
-    update(index,segmentTree);
-    if(segmentTree[index].left >= left && segmentTree[index].right <= right)
-    {
-        segmentTree[index].color = color;segmentTree[index].willColor = color;
-        updateCountBlack(index,segmentTree);
-        update(index,segmentTree);
+    if (tree[v].r <= r && tree[v].l >= l) {
+        push(v);
+        tree[v].set = value;
+        tree[v].up = true;
         return;
     }
-    else if(segmentTree[index].right < left || right < segmentTree[index].left){return;}
-    else
-    {
-        draw(index*2,left,right,color,segmentTree);
-        draw(index*2+1,left,right,color,segmentTree);
+
+    push(v);
+    update(v * 2, value, l, r);
+    update(v * 2 + 1, value, l, r);
+
+    bool left = rightisblack(v * 2);
+    bool right = leftisblack(v * 2 + 1);
+
+    tree[v].number = tree[v * 2].number + tree[v * 2 + 1].number;
+    tree[v].segments = tree[v * 2 + 1].segments + tree[v * 2].segments;
+
+    if (left && right) {
+        tree[v].segments--;
     }
-    update(index,segmentTree);
 }
 
-int main()
+int main() 
 {
-    std::ios::sync_with_stdio(false);
-	std::cin.tie(nullptr);
-	std::cout.tie(nullptr);
+    std::cin >> count;
+    color.resize((unsigned) count);
+    cord.resize((unsigned) count);
+    delta.resize((unsigned) count);
 
-    std::vector<Node> segmentTree(1e6);
-    buildSegmentTree(segmentTree);
-    size_t countQueries;
-    std::cin >> countQueries;
-    for (size_t i = 0; i < countQueries; i++)
-    {
-        char type;
-        int left,right;
-        std::cin >> type >> left >> right; 
-        if(type == 'W'){draw(1,left,left+right-1,WHITE,segmentTree);}
-        else{draw(1,left,left+right-1,BLACK,segmentTree);}
-        std::cout << segmentTree[1].count << ' ' << segmentTree[1].length << '\n';
+    int maxdelta = 0;
+    int del;
+    int maxcord = INT32_MIN;
+    int mincord = INT32_MAX;
+
+    for (int i = 0; i < count; i++) {
+        std::cin >> color[i] >> cord[i] >> delta[i];
+
+        if (delta[i] > 0) delta[i]--;
+        else delta[i]++;
+
+        del = cord[i] + delta[i];
+        if (del > maxcord) 
+        {
+            maxcord = del;
+        }
+
+        if (maxdelta > cord[i]) 
+        {
+            maxdelta = cord[i];
+        }
     }
-    
 
-    
-    
+    int length;
+    if (maxdelta < 0) 
+    {
+        length = maxcord - maxdelta + 1;
+    } else 
+    {
+        length = maxcord + 1;
+    }
+
+    tree.resize((unsigned) (4 * length));
+    build(1, 0, length);
+    for (int i = 0; i < count; i++) 
+    {
+        if (color[i] == 'W') 
+        {
+            update(1, 0, cord[i] - maxdelta, cord[i] + delta[i] - maxdelta);
+            std::cout <<  tree[1].segments << ' ' << tree[1].number;
+        }
+
+        if (color[i] == 'B') 
+        {
+            update(1, 1, cord[i] - maxdelta, cord[i] + delta[i] - maxdelta);
+            std::cout <<  tree[1].segments << ' ' << tree[1].number;
+        }
+        std::cout << '\n';
+    }
     return 0;
 }

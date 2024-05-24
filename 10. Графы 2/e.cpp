@@ -33,12 +33,11 @@ void dijkstra(std::vector<size_t> &spanningTree, std::unordered_map<size_t,std::
         visited[nextVertex] = 1;
         nextVertex = findMin(spanningTree,visited);
     }
-    
 }
 
 int main()
 {
-    size_t inf = 1e9;
+    size_t inf = 1e15;
     std::ios::sync_with_stdio(false);
 	std::cin.tie(nullptr);
 	std::cout.tie(nullptr);
